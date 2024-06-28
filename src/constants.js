@@ -1,5 +1,6 @@
 export const dbName = "memotalk";
 export const cookieOptions = {
-    httpOnly: true,
-    secure: true,
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "strict",
 };
