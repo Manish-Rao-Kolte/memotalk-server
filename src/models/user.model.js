@@ -7,6 +7,8 @@ const userSchema = new Schema(
     username: {
       type: String,
       required: [true, "Username is required!"],
+      unique: true,
+      index: true,
     },
     email: {
       type: String,
@@ -33,8 +35,25 @@ const userSchema = new Schema(
         type: String,
       },
     },
-    refreshToken: {
+    activity: {
+      type: Date,
+    },
+    friends: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    groups: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "Group",
+      },
+    ],
+    role: {
       type: String,
+      default: "user",
+      enum: ["user", "admin"],
     },
   },
   { timestamps: true }
