@@ -64,11 +64,29 @@ const markMessagesAsRead = asyncHandler(async (req, res) => {
     }
   );
 
-  console.log(markMessagesAsRead);
-
   return res
     .status(200)
     .json(new apiResponse(200, true, null, "Messages update successfully!"));
 });
 
-export { createMessage, getMessages, markMessagesAsRead };
+const markMessageAsRead = asyncHandler(async (req, res) => {
+  const { messageId } = req.body;
+
+  if (!messageId) {
+    throw new apiError(400, "Message Id is required!");
+  }
+
+  const updatedMessage = await Message.findByIdAndUpdate(messageId, {
+    $set: { read: true },
+  });
+
+  if (!updatedMessage) {
+    throw new apiError(500, "Unable to mark message as read!");
+  }
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, true, null, "Message marked as read!"));
+});
+
+export { createMessage, getMessages, markMessagesAsRead, markMessageAsRead };

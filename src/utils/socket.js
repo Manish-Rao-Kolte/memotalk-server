@@ -12,7 +12,9 @@ const setupSocket = (io) => {
 
   io.on("connection", async (socket) => {
     // Map userID to socket.id
-    await redisClient.set(socket.userID, socket.id).catch(console.error);
+    await redisClient
+      .set(socket.userID, socket.id)
+      .catch((err) => console.log("Redis: ", err));
 
     console.log(
       `User connected: ${socket.userID} with socket ID: ${socket.id}`
@@ -34,12 +36,6 @@ const setupSocket = (io) => {
           console.log(`User ${recipientID} is not connected.`);
           return;
         }
-        // // Save message to MongoDB
-        // const newMessage = await Message.create({
-        //   sender: socket.userID,
-        //   recipient: recipientID,
-        //   message,
-        // });
         //emit to recipient
         io.to(recipientSocketID).emit("privateMessage", {
           senderID: socket.userID,
@@ -49,6 +45,12 @@ const setupSocket = (io) => {
         console.error("Redis error:", err);
         return;
       }
+    });
+
+    socket.on("messageRead", (messageId) => {
+      // Update your database (set message with `messageId` to read = true)
+      // Emit an event to all connected clients that message with `messageId` is read
+      io.emit("messageRead", messageId);
     });
   });
 };
