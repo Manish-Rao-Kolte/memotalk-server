@@ -1,6 +1,10 @@
-import redisClient from "../config/redisClient.config.js";
+import redis from "redis";
+import createRedisClient from "../config/redisClient.config.js";
+import User from "../models/user.model.js";
 
-const setupSocket = (io) => {
+const setupSocket = async (io) => {
+  const redisClient = await createRedisClient();
+
   io.use((socket, next) => {
     const userID = socket.handshake.auth.userID;
     if (!userID) {
@@ -11,46 +15,78 @@ const setupSocket = (io) => {
   });
 
   io.on("connection", async (socket) => {
-    // Map userID to socket.id
-    await redisClient
-      .set(socket.userID, socket.id)
-      .catch((err) => console.log("Redis: ", err));
+    // Handle user connection and send friends' current status
+    socket.on("userConnect", async ({ userId }) => {
+      const userData = {
+        socketId: socket.id,
+        status: "online",
+        lastSeen: null,
+      };
 
-    console.log(
-      `User connected: ${socket.userID} with socket ID: ${socket.id}`
-    );
+      // Map userID and status details
+      await redisClient.hSet(
+        "users",
+        socket.userID,
+        JSON.stringify(userData),
+        redis.print
+      );
+
+      await User.findByIdAndUpdate(userId, {
+        $set: { active: true },
+      });
+
+      console.log(
+        `User connected: ${socket.userID} with socket ID: ${socket.id}`
+      );
+      io.emit("userConnected", socket.userID);
+    });
 
     // Handle user disconnection
     socket.on("disconnect", async () => {
-      await redisClient.del(socket.userID).catch(console.error);
+      const userData = {
+        socketId: null,
+        status: "offline",
+        lastSeen: new Date().toISOString(),
+      };
+      await redisClient.hSet(
+        "users",
+        socket.userID,
+        JSON.stringify(userData),
+        redis.print
+      );
+      await User.findByIdAndUpdate(socket.userID, {
+        $set: { active: false, lastSeen: new Date().toISOString() },
+      });
       console.log(`User disconnected: ${socket.userID}`);
+      io.emit("userDisconnected", socket.userID);
     });
 
     // Handle sending a message
     socket.on("sendMessage", async (data) => {
       const { recipientID, message } = data;
       try {
-        //get previousely stored socket id from redis
-        const recipientSocketID = await redisClient.get(recipientID);
+        const recipient = JSON.parse(
+          await redisClient.hGet("users", recipientID)
+        );
+        const recipientSocketID = recipient?.socketId;
         if (!recipientSocketID) {
           console.log(`User ${recipientID} is not connected.`);
           return;
         }
-        //emit to recipient
+        // Emit to recipient
         io.to(recipientSocketID).emit("privateMessage", {
           senderID: socket.userID,
           message,
         });
       } catch (error) {
-        console.error("Redis error:", err);
-        return;
+        console.error("Redis error:", error);
       }
     });
 
-    socket.on("messageRead", (messageId) => {
-      // Update your database (set message with `messageId` to read = true)
-      // Emit an event to all connected clients that message with `messageId` is read
-      io.emit("messageRead", messageId);
+    socket.on("messageRead", (data) => {
+      // Update database (set message with `messageId` to read = true)
+      // Emit an event to all connected clients that the message with `messageId` is read
+      io.emit("messageRead", data);
     });
   });
 };

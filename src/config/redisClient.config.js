@@ -1,21 +1,24 @@
 import { createClient } from "redis";
 
-const redisClient = createClient({
-  password: process.env.REDIS_PASSWORD,
-  socket: {
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT,
-  },
-});
+const createRedisClient = async () => {
+  const redisClient = createClient({
+    password: process.env.REDIS_PASSWORD,
+    socket: {
+      host: process.env.REDIS_HOST,
+      port: process.env.REDIS_PORT,
+    },
+  });
 
-redisClient.on("error", (err) => {
-  console.error("Redis Client Error", err);
-});
+  redisClient.on("error", (err) => {
+    console.error("Redis Client Error", err);
+  });
 
-redisClient.on("connect", () => {
-  console.log("Connected to Redis");
-});
+  redisClient.on("connect", () => {
+    console.log("Connected to Redis");
+  });
 
-redisClient.connect();
+  await redisClient.connect();
+  return redisClient;
+};
 
-export default redisClient;
+export default createRedisClient;

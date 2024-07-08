@@ -181,117 +181,6 @@ const getChatFriendAndUsers = asyncHandler(async (req, res) => {
     throw new apiError(400, "User id is required!");
   }
 
-  // const usersWhoHaveConversation = await User.aggregate([
-  //   { $match: { _id: new mongoose.Types.ObjectId(userId) } },
-  //   {
-  //     $lookup: {
-  //       from: "messages",
-  //       let: { userId: "$_id" },
-  //       pipeline: [
-  //         {
-  //           $match: {
-  //             $expr: {
-  //               $or: [
-  //                 { $eq: ["$recipient", "$$userId"] },
-  //                 { $eq: ["$sender", "$$userId"] },
-  //               ],
-  //             },
-  //           },
-  //         },
-  //         {
-  //           $group: {
-  //             _id: null,
-  //             users: {
-  //               $addToSet: {
-  //                 $cond: [
-  //                   { $eq: ["$recipient", "$$userId"] },
-  //                   "$sender",
-  //                   "$recipient",
-  //                 ],
-  //               },
-  //             },
-  //           },
-  //         },
-  //       ],
-  //       as: "conversationUsers",
-  //     },
-  //   },
-  //   {
-  //     $project: {
-  //       _id: 0,
-  //       users: { $arrayElemAt: ["$conversationUsers.users", 0] },
-  //     },
-  //   },
-  //   {
-  //     $unwind: "$users",
-  //   },
-  //   {
-  //     $lookup: {
-  //       from: "users",
-  //       localField: "users",
-  //       foreignField: "_id",
-  //       as: "user",
-  //     },
-  //   },
-  //   {
-  //     $unwind: "$user",
-  //   },
-  //   {
-  //     $lookup: {
-  //       from: "messages",
-  //       let: {
-  //         userId: new mongoose.Types.ObjectId(userId),
-  //         otherUserId: "$user._id",
-  //       },
-  //       pipeline: [
-  //         {
-  //           $match: {
-  //             $expr: {
-  //               $or: [
-  //                 {
-  //                   $and: [
-  //                     { $eq: ["$recipient", "$$userId"] },
-  //                     { $eq: ["$sender", "$$otherUserId"] },
-  //                   ],
-  //                 },
-  //                 {
-  //                   $and: [
-  //                     { $eq: ["$recipient", "$$otherUserId"] },
-  //                     { $eq: ["$sender", "$$userId"] },
-  //                   ],
-  //                 },
-  //               ],
-  //             },
-  //           },
-  //         },
-  //         {
-  //           $sort: { createdAt: -1 },
-  //         },
-  //         {
-  //           $limit: 1,
-  //         },
-  //       ],
-  //       as: "lastMessage",
-  //     },
-  //   },
-  //   {
-  //     $unwind: "$lastMessage",
-  //   },
-  //   {
-  //     $project: {
-  //       _id: "$user._id",
-  //       avatar: "$user.avatar",
-  //       fullname: "$user.fullname",
-  //       username: "$user.username",
-  //       lastMessageContent: "$lastMessage.message",
-  //       lastMessageTime: "$lastMessage.createdAt",
-  //     },
-  //   },
-  //   {
-  //     $sort: { lastMessageTime: -1 },
-  //   },
-  // ]);
-
   const usersWhoHaveConversation = await User.aggregate([
     { $match: { _id: new mongoose.Types.ObjectId(userId) } },
     {
@@ -427,6 +316,8 @@ const getChatFriendAndUsers = asyncHandler(async (req, res) => {
         avatar: "$user.avatar",
         fullname: "$user.fullname",
         username: "$user.username",
+        active: "$user.active",
+        lastSeen: "$user.lastSeen",
         lastMessageContent: "$lastMessage.message",
         lastMessageTime: "$lastMessage.createdAt",
         unreadMessagesCount: 1,
@@ -447,6 +338,14 @@ const getChatFriendAndUsers = asyncHandler(async (req, res) => {
         "Senders fetched successfully!"
       )
     );
+});
+
+const getUserStatus = asyncHandler(async (req, res) => {
+  const { userId } = req.query;
+
+  if (!userId) {
+    throw new apiError(400, "user id is required!");
+  }
 });
 
 //generate access and refresh token for user login.

@@ -35,8 +35,13 @@ const userSchema = new Schema(
         type: String,
       },
     },
-    activity: {
+    active: {
+      type: Boolean,
+      default: false,
+    },
+    lastSeen: {
       type: Date,
+      default: new Date().toISOString(),
     },
     friends: [
       {
