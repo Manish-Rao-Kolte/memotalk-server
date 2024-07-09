@@ -5,8 +5,11 @@ import { apiResponse } from "../utils/apiResponse.js";
 
 const createMessage = asyncHandler(async (req, res) => {
   const { message, sender, recipient } = req.body;
-  if (!message) {
-    throw new apiError(400, "Message data is required!");
+  if (!message && sender && recipient) {
+    throw new apiError(
+      400,
+      "Message data, sender data and recipient data is required!"
+    );
   }
 
   const newMessage = await Message.create({
