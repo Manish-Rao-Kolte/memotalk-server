@@ -2,21 +2,42 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { apiError } from "../utils/apiError.js";
 import Message from "../models/message.model.js";
 import { apiResponse } from "../utils/apiResponse.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import fs from "fs";
 
 const createMessage = asyncHandler(async (req, res) => {
+  const filePath = req?.file?.path;
+  if (!req.user) {
+    if (filePath) {
+      fs.unlinkSync(filePath);
+    }
+    throw new apiError(401, "Unauthorized access!");
+  }
   const { message, sender, recipient } = req.body;
-  if (!message && sender && recipient) {
-    throw new apiError(
-      400,
-      "Message data, sender data and recipient data is required!"
-    );
+  if (!sender || !recipient) {
+    throw new apiError(400, "Sender data and recipient data is required!");
+  }
+  if (!filePath && !message) {
+    throw new apiError(400, "Message content or file data is required!");
   }
 
-  const newMessage = await Message.create({
+  const messageData = {
     sender,
     recipient,
     message,
-  });
+    file: "",
+  };
+  if (filePath) {
+    const instance = await uploadOnCloudinary(filePath);
+    if (!instance || instance?.name === "Error") {
+      fs.unlinkSync(filePath); //deleting file from temp to clear storage.
+      throw new apiError(500, "Error while uploading file!");
+    }
+    messageData.file = instance.url;
+    fs.unlinkSync(filePath);
+  }
+
+  const newMessage = await Message.create(messageData);
 
   if (!newMessage) {
     throw new apiError(500, "Error while creating new message!");
