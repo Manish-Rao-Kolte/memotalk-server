@@ -96,13 +96,21 @@ const markMessagesAsRead = asyncHandler(async (req, res) => {
 const markMessageAsRead = asyncHandler(async (req, res) => {
   const { messageId } = req.body;
 
+  if (!req.user) {
+    throw new apiError(401, "Unauthorized Access!");
+  }
+
   if (!messageId) {
     throw new apiError(400, "Message Id is required!");
   }
 
-  const updatedMessage = await Message.findByIdAndUpdate(messageId, {
-    $set: { read: true },
-  });
+  const updatedMessage = await Message.findByIdAndUpdate(
+    messageId,
+    {
+      $set: { read: true, delivered: true },
+    },
+    { new: true }
+  );
 
   if (!updatedMessage) {
     throw new apiError(500, "Unable to mark message as read!");
@@ -113,4 +121,38 @@ const markMessageAsRead = asyncHandler(async (req, res) => {
     .json(new apiResponse(200, true, null, "Message marked as read!"));
 });
 
-export { createMessage, getMessages, markMessagesAsRead, markMessageAsRead };
+const markMessageAsDelivered = asyncHandler(async (req, res) => {
+  const { messageId } = req.body;
+
+  if (!req.user) {
+    throw new apiError(401, "Unauthorized Access!");
+  }
+
+  if (!messageId) {
+    throw new apiError(400, "Message Id is required!");
+  }
+
+  const updatedMessage = await Message.findByIdAndUpdate(
+    messageId,
+    {
+      $set: { delivered: true },
+    },
+    { new: true }
+  );
+
+  if (!updatedMessage) {
+    throw new apiError(500, "Unable to mark message as delivered!");
+  }
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, true, null, "Message marked as delivered!"));
+});
+
+export {
+  createMessage,
+  getMessages,
+  markMessagesAsRead,
+  markMessageAsRead,
+  markMessageAsDelivered,
+};

@@ -12,6 +12,9 @@ export const validateJwt = asyncHandler(async (req, res, next) => {
       throw new apiError(401, "User is not loggedIn!");
     }
     const decodedToken = jwt.verify(token, process.env.REFRESH_TOKEN_SECRET);
+    if (!decodedToken) {
+      throw new apiError(401, "Unauthorized access!");
+    }
     const user = await User.findById(decodedToken?._id).select(
       "-password -refreshToken"
     );

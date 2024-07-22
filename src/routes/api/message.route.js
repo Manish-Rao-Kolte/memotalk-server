@@ -3,6 +3,7 @@ import { validateJwt } from "../../middlewares/auth.middleware.js";
 import {
   createMessage,
   getMessages,
+  markMessageAsDelivered,
   markMessageAsRead,
   markMessagesAsRead,
 } from "../../controllers/message.controller.js";
@@ -19,6 +20,11 @@ messageRouter.post(
   createMessage
 );
 messageRouter.patch("/update/mark-read", validateJwt, markMessagesAsRead);
-messageRouter.patch("/update-one", validateJwt, markMessageAsRead);
+messageRouter.put("/update-one/mark-read", validateJwt, markMessageAsRead);
+messageRouter.put(
+  "/update-one/mark-delivered",
+  validateJwt,
+  markMessageAsDelivered
+);
 
 export default messageRouter;

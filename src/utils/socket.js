@@ -88,6 +88,10 @@ const setupSocket = async (io) => {
       // Emit an event to all connected clients that the message with `messageId` is read
       io.emit("messageRead", data);
     });
+
+    socket.on("messageDelivered", (data) => {
+      io.emit("messageDelivered", data);
+    });
   });
 };
 

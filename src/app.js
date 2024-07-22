@@ -45,12 +45,12 @@ app.use("/api/messages", messageRouter);
 
 app.use((err, req, res, next) => {
   if (err) {
-    console.log(err);
+    console.log("From error handler: ", err);
     // Determine the status code based on the error
-    const statusCode = err.statusCode || 500; // Default to 500 if no status code is set
+    const statusCode = err?.statusCode || 500; // Default to 500 if no status code is set
 
     // Send a JSON response with the error message and status code
-    res.status(statusCode).json({ error: err.message });
+    res.status(statusCode).json({ error: err?.message });
   }
 });
 
