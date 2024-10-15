@@ -51,6 +51,8 @@ app.use((err, req, res, next) => {
 
     // Send a JSON response with the error message and status code
     res.status(statusCode).json({ error: err?.message });
+  } else {
+    next();
   }
 });
 
